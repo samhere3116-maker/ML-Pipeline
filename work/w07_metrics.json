@@ -1,0 +1,15 @@
+{
+  "precision_at_50_grouped": 0.38,
+  "precision_at_50_random_split": 0.64,
+  "base_rate": 0.1821,
+  "week4_baseline_precision_at_50": 0.0,
+  "feature_importance_rank": [
+    "visible_queries",
+    "content_age_days",
+    "imp_prev30",
+    "pos_prev30",
+    "clk_prev30"
+  ],
+  "validated_window": "2026-03 (Feb+Mar features)",
+  "split_design": "GroupShuffleSplit by client_hash_id, test_size=0.25"
+}
