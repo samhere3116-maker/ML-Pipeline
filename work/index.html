@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Finding the Pages Worth Reviewing First — A Refresh-Priority Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2b2621; --paper:#faf7f2; --paper-dim:#f1ebe0;
+    --rule:#dcd3c0; --accent:#c87d4a; --accent-dark:#9c5a2e;
+    --muted:#6b6256;
+    font-size:18px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#ece6da; --paper:#1c1915; --paper-dim:#242019;
+      --rule:#3a342a; --accent:#e0986a; --accent-dark:#f0b587; --muted:#a79d8c;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#ece6da; --paper:#1c1915; --paper-dim:#242019;
+    --rule:#3a342a; --accent:#e0986a; --accent-dark:#f0b587; --muted:#a79d8c;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:"Source Serif 4", Georgia, "Times New Roman", serif;
+    line-height:1.65; -webkit-font-smoothing:antialiased;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .mono{font-family:"IBM Plex Mono", ui-monospace, Menlo, monospace;}
+  .wrap{max-width:740px; margin:0 auto; padding:0 24px;}
+  .wide{max-width:860px; margin:0 auto; padding:0 24px;}
+
+  header.hero{
+    background:var(--paper-dim); border-bottom:1px solid var(--rule);
+    padding:72px 0 48px;
+  }
+  .kicker{
+    font-family:"IBM Plex Mono", monospace; font-size:13px; letter-spacing:.04em;
+    color:var(--muted); margin-bottom:18px;
+  }
+  h1.title{
+    font-size:2.5rem; line-height:1.18; font-weight:600; margin:0 0 20px;
+    max-width:14ch;
+  }
+  .abstract{
+    font-size:1.05rem; color:var(--ink); max-width:62ch; margin:0 0 28px;
+  }
+  .stat-row{
+    display:flex; flex-wrap:wrap; gap:36px; margin-top:36px;
+  }
+  .stat{min-width:120px;}
+  .stat .num{
+    font-family:"IBM Plex Mono", monospace; font-size:1.9rem; font-weight:600;
+    color:var(--accent-dark); display:block; line-height:1;
+  }
+  .stat .lbl{font-size:0.88rem; color:var(--muted); margin-top:6px; display:block;}
+
+  nav.toc{
+    background:var(--paper); border-bottom:1px solid var(--rule); padding:16px 0;
+    position:sticky; top:0; z-index:5; backdrop-filter:blur(6px);
+  }
+  nav.toc ol{
+    list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap;
+    gap:4px 18px; font-family:"IBM Plex Mono",monospace; font-size:12.5px;
+  }
+  nav.toc a{color:var(--muted); text-decoration:none;}
+  nav.toc a:hover{color:var(--accent-dark);}
+
+  main{padding:56px 0 100px;}
+  section{margin-bottom:64px;}
+  section:last-child{margin-bottom:0;}
+
+  h2{
+    font-size:1.55rem; font-weight:600; margin:0 0 20px;
+    padding-bottom:10px; border-bottom:2px solid var(--accent);
+    display:inline-block;
+  }
+  h3{font-size:1.12rem; font-weight:600; margin:28px 0 10px;}
+  p{margin:0 0 16px; max-width:68ch;}
+  ul,ol{margin:0 0 16px; padding-left:1.3em; max-width:66ch;}
+  li{margin-bottom:6px;}
+  a{color:var(--accent-dark);}
+  strong{font-weight:600;}
+  code{font-family:"IBM Plex Mono",monospace; font-size:0.88em; background:var(--paper-dim); padding:1px 5px; border-radius:3px;}
+
+  .callout{
+    border-left:3px solid var(--accent); background:var(--paper-dim);
+    padding:16px 20px; margin:20px 0; font-size:0.97rem; max-width:64ch;
+  }
+  .callout.limit{border-left-color:var(--muted);}
+
+  figure{margin:28px 0;}
+  figure img{max-width:100%; display:block; border:1px solid var(--rule); border-radius:4px;}
+  figcaption{
+    font-size:0.88rem; color:var(--muted); margin-top:10px; max-width:60ch;
+  }
+
+  table{border-collapse:collapse; width:100%; margin:20px 0; font-size:0.95rem;}
+  caption{text-align:left; font-size:0.85rem; color:var(--muted); margin-bottom:8px;}
+  th,td{text-align:left; padding:9px 14px; border-bottom:1px solid var(--rule);}
+  th{font-family:"IBM Plex Mono",monospace; font-size:0.8rem; letter-spacing:.02em; color:var(--muted); font-weight:500;}
+  tr.highlight td{font-weight:600; color:var(--accent-dark);}
+  .scrollx{overflow-x:auto; max-width:100%;}
+
+  .reco{
+    border:1px solid var(--rule); border-radius:6px; padding:18px 20px; margin-bottom:14px;
+  }
+  .reco .rank{font-family:"IBM Plex Mono",monospace; color:var(--accent-dark); font-size:0.85rem; margin-bottom:4px; display:block;}
+  .reco h3{margin:0 0 8px;}
+  .nogo{list-style:none; padding:0;}
+  .nogo li{padding-left:1.6em; position:relative;}
+  .nogo li::before{content:"✕"; position:absolute; left:0; color:var(--accent-dark);}
+
+  footer{
+    border-top:1px solid var(--rule); padding:40px 0 60px; background:var(--paper-dim);
+  }
+  footer p{color:var(--muted); font-size:0.93rem;}
+
+  @media (max-width:640px){
+    :root{font-size:16.5px;}
+    h1.title{font-size:1.9rem;}
+    .stat-row{gap:24px;}
+    header.hero{padding:48px 0 36px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">RESEARCH NOTE · LANE: REFRESH &amp; CONTENT OPPORTUNITY SCORING</div>
+    <h1 class="title">Finding the Pages Worth Reviewing First</h1>
+    <p class="abstract">
+      Content teams can't manually review every page, so the practical question is
+      which ones to check first. Using 73,112 content items from FlyRank's production
+      search-performance warehouse, I built a simple classifier to rank pages by
+      likelihood of declining search impressions, and compared it against a
+      hand-written baseline rule and a naive validation split. Evaluated honestly —
+      on pages from clients the model never saw during training — the model ranked
+      declining pages into its top 50 picks at roughly 2.9 times the rate of random
+      selection, while the baseline rule, built for a different problem, scored zero
+      on this particular target. This is a decision-support signal for prioritizing
+      manual review, not an automated or causal claim.
+    </p>
+    <div class="stat-row">
+      <div class="stat"><span class="num">73,112</span><span class="lbl">content items analyzed</span></div>
+      <div class="stat"><span class="num">0.380</span><span class="lbl">Precision@50, honest split</span></div>
+      <div class="stat"><span class="num">~2.9×</span><span class="lbl">lift over random selection</span></div>
+      <div class="stat"><span class="num">79M</span><span class="lbl">warehouse rows behind the sample</span></div>
+    </div>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="wrap">
+    <ol>
+      <li><a href="#intro">Introduction</a></li>
+      <li><a href="#data">Data</a></li>
+      <li><a href="#method">Methodology</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#limits">Limitations</a></li>
+      <li><a href="#reco">Recommendations</a></li>
+      <li><a href="#repro">Reproducibility</a></li>
+      <li><a href="#ack">Acknowledgments</a></li>
+    </ol>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <section id="intro">
+    <h2>Introduction</h2>
+    <p>
+      A content team managing thousands of pages cannot read every one by hand each
+      week. In practice, someone has to decide: which pages get checked first? A
+      wrong priority order has a real cost — a reviewer's limited hour spent on a
+      page that was never actually at risk is an hour not spent on a page that was.
+    </p>
+    <p>
+      This project asks a narrow, practical version of that question: within one
+      lane — <strong>Refresh &amp; Content Opportunity Scoring</strong> — can a
+      simple model, trained on a page's own recent search performance, rank pages
+      by risk of decline better than a hand-written rule and better than chance?
+      The decision this supports is a weekly review queue, not an automated action.
+    </p>
+  </section>
+
+  <section id="data">
+    <h2>Data</h2>
+    <p>
+      This study uses the <strong>FlyRank ML Internship Warehouse</strong>, a
+      production search-performance dataset released for this program on Hugging
+      Face, built on roughly 79 million underlying rows of daily content
+      performance. Three tables were used:
+    </p>
+    <ul>
+      <li><code>fact_content_daily_performance</code> — one row per content item, per client, per day, with Google Search Console metrics (impressions, clicks, average position) and a GA4 availability flag.</li>
+      <li><code>dim_content</code> — static content metadata, including creation date, word count, and content type.</li>
+      <li><code>fact_content_query_90d</code> — a trailing 90-day summary of the distinct search queries each page has earned visibility for.</li>
+    </ul>
+    <p>
+      The working window is <strong>February 1 – March 31, 2026</strong>, a
+      mid-panel span chosen deliberately: the warehouse's own documentation flags
+      its most recent month as a reserved, non-random sealed holdout, not meant for
+      iterating on label logic. Using an earlier window keeps that final month
+      untouched for any future out-of-time check.
+    </p>
+    <p>
+      The modeling population was filtered to content items with at least 50
+      impressions in the prior 30-day window — pages too new or too small to
+      measure a meaningful trend on were excluded, rather than silently zero-filled.
+      This left <strong>73,112 content items</strong>, with <strong>18.2%</strong>
+      labeled as declining under the definition below.
+    </p>
+    <div class="callout">
+      All client names, URLs, and individual search queries have been excluded from
+      this paper and from every notebook in the accompanying repository. Only
+      hashed, anonymized identifiers and aggregate statistics appear anywhere in
+      this work.
+    </div>
+  </section>
+
+  <section id="method">
+    <h2>Methodology</h2>
+
+    <h3>Label definition</h3>
+    <p>
+      A content item is labeled <strong>declining</strong> if its impressions in
+      the most recent 30-day window fell more than 20% below its impressions in the
+      preceding 30-day window. This is a proxy, not a verified business outcome —
+      it describes a pattern in search visibility, not a confirmed loss of
+      real-world value.
+    </p>
+
+    <h3>Features</h3>
+    <p>Five features were used, each chosen to be knowable strictly before the label's own time window:</p>
+    <ul>
+      <li><code>imp_prev30</code>, <code>clk_prev30</code>, <code>pos_prev30</code> — impressions, clicks, and average position, summed/averaged only over days before the label window.</li>
+      <li><code>visible_queries</code> — the count of distinct search queries the page has historically earned visibility for.</li>
+      <li><code>content_age_days</code> — days since the content was created, a fixed and always-past value.</li>
+    </ul>
+
+    <h3>Baseline</h3>
+    <p>
+      Before any model was trained, a hand-written rule was built and tested: flag
+      pages ranked in the top 20 search positions whose click-through rate sits
+      meaningfully below the average CTR for their position tier. This targets a
+      different, related problem — visible-but-under-clicked pages — and is
+      reported here as a baseline a model should be measured against, not as an
+      input to the model itself.
+    </p>
+
+    <h3>Validation design</h3>
+    <p>
+      Pages from the same client share templates, niche, and overall site health —
+      a random row-level split risks letting the model implicitly learn
+      client-specific patterns during training and then get "tested" on more pages
+      from that same client. All results below use a <strong>client-grouped
+      split</strong> (75% train / 25% test, zero clients appearing in both sides),
+      which asks the honest question: does this work on a client the model has
+      never seen?
+    </p>
+
+    <h3>Leakage checks</h3>
+    <p>
+      Two checks were run against this feature set before trusting any result.
+      First, the training feature list was confirmed to exclude the baseline rule's
+      own score, so the model could not simply learn to imitate the rule. Second, a
+      deliberate trap was run: re-adding the raw value the label itself is computed
+      from as a feature. Honest Precision@50 of 0.380 jumped to a perfect 1.000 —
+      the textbook signature of leakage — confirming the real feature set is clean
+      once that column is excluded.
+    </p>
+  </section>
+
+  <section id="results">
+    <h2>Results</h2>
+    <p>
+      Four numbers anchor this section: what a random guess would score, what the
+      Week-4 rule scores on this specific target, what an honest split reports, and
+      what a naive split would have claimed instead.
+    </p>
+
+    <figure>
+      <img src="figures/precision_comparison.png" alt="Bar chart comparing Precision at 50 across four methods: base rate 0.133, Week-4 rule 0.000, naive random split 0.640, honest grouped split 0.380">
+      <figcaption>
+        Precision@50 — the share of the top 50 ranked pages that were genuinely
+        declining — across four comparisons, all measured on the same evaluation
+        population. The grouped-split number (0.380) is the one reported as this
+        study's result.
+      </figcaption>
+    </figure>
+
+    <div class="scrollx">
+    <table>
+      <caption>Precision@50 by method</caption>
+      <thead><tr><th>Method</th><th>Precision@50</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Base rate (random)</td><td class="mono">0.133</td><td>Expected score from picking 50 pages at random</td></tr>
+        <tr><td>Week-4 baseline rule</td><td class="mono">0.000</td><td>Built for a different target (CTR vs. position), not a fair loss</td></tr>
+        <tr><td>Naive random split</td><td class="mono">0.640</td><td>Overstated — client identity leaked across train/test</td></tr>
+        <tr class="highlight"><td>Grouped split (reported result)</td><td class="mono">0.380</td><td>Honest, out-of-client evaluation — ≈2.9× the base rate</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p>
+      The gap between the naive split (0.640) and the honest split (0.380) is
+      itself a finding: a 41% relative overstatement from a validation design that
+      looks correct but quietly lets the model memorize client-level patterns
+      rather than a genuinely transferable signal.
+    </p>
+
+    <figure>
+      <img src="figures/feature_importance.png" alt="Horizontal bar chart of logistic regression coefficients, with visible_queries showing the largest magnitude, followed by clk_prev30, pos_prev30, content_age_days, and imp_prev30">
+      <figcaption>
+        Logistic regression coefficients for the five features. All point the same
+        direction — higher values are associated with lower decline risk — with
+        <code>visible_queries</code> carrying the largest weight. These are raw,
+        unstandardized coefficients, measured on different scales, so relative bar
+        length is suggestive rather than a precise ranking of true effect size.
+      </figcaption>
+    </figure>
+
+    <p>
+      A companion Random Forest model, evaluated on the same split, ranked features
+      differently in relative order (<code>visible_queries</code> and
+      <code>content_age_days</code> led, followed closely by <code>imp_prev30</code>)
+      but scored lower overall (Precision@50 = 0.320) than the simpler logistic
+      regression — a reminder that added model complexity did not pay for itself on
+      this five-feature set.
+    </p>
+  </section>
+
+  <section id="limits">
+    <h2>Limitations</h2>
+    <div class="callout limit">
+      <strong>Observational, not causal.</strong> This is cross-sectional data —
+      it supports "these pages look worth reviewing first," never "refreshing these
+      pages will cause recovery." No intervention was run or measured.
+    </div>
+    <div class="callout limit">
+      <strong>Single time window.</strong> Everything here is validated on one
+      month (Feb–Mar 2026). Performance on a different season, a newly onboarded
+      client, or a future month is untested.
+    </div>
+    <div class="callout limit">
+      <strong>Proxy label.</strong> "Declining" is a 30-day impression threshold,
+      not a verified business outcome like lost revenue or traffic that mattered.
+    </div>
+    <div class="callout limit">
+      <strong>Baseline mismatch.</strong> The Week-4 rule's 0.000 score reflects a
+      target mismatch (it targets CTR problems, not impression decline), not
+      evidence that the rule itself is poorly built.
+    </div>
+    <div class="callout limit">
+      <strong>One query-signal caveat.</strong> <code>visible_queries</code>, the
+      model's strongest feature, is drawn from a fixed trailing 90-day table whose
+      window can overlap the prediction target window — treated here as a soft
+      signal pending a cleaner window-aligned rebuild.
+    </div>
+  </section>
+
+  <section id="reco">
+    <h2>Ranked Recommendations</h2>
+    <p>
+      Every flagged page carries the same recommended action — a human review for
+      refresh or consolidation — paired with one of three reason codes describing
+      why the model flagged it.
+    </p>
+
+    <div class="reco">
+      <span class="rank">REASON CODE</span>
+      <h3><code>aging_narrow_visibility</code></h3>
+      <p>Older content with a narrower-than-typical spread of search queries — the model's two strongest signals combined. Likely candidates for a content refresh: updating facts, expanding thin sections, improving topical coverage.</p>
+    </div>
+    <div class="reco">
+      <span class="rank">REASON CODE</span>
+      <h3><code>high_traffic_volatility</code></h3>
+      <p>Pages with unusually large prior-window impressions showing a swing beyond the decline threshold — a sizeable page where even a modest percentage move is a large absolute change. Worth a first check for whether the move reflects a real trend or ordinary noise at that scale.</p>
+    </div>
+    <div class="reco">
+      <span class="rank">REASON CODE</span>
+      <h3><code>general_decline_risk</code></h3>
+      <p>Flagged by the model without matching either specific pattern above — still worth a human look, with less diagnostic context attached.</p>
+    </div>
+
+    <h3>Human review, required before any action</h3>
+    <p>
+      A reviewer should confirm the page's search intent still matches its
+      content, check whether a recent manual change already addressed the
+      apparent issue, and rule out an external explanation (seasonality, a
+      tracked outage, a URL migration) before treating the flag as a real content
+      problem.
+    </p>
+
+    <h3>What should never be automated</h3>
+    <ul class="nogo">
+      <li>Auto-publishing content changes based on a flag</li>
+      <li>Auto-removing or deprioritizing pages from a site</li>
+      <li>Reallocating budget or traffic based on score alone, without sign-off</li>
+      <li>Applying this queue to a client type or time period outside the validated scope</li>
+    </ul>
+
+    <h3>Monitoring and retrain triggers</h3>
+    <p>
+      Re-validate if the portfolio's base rate of declining pages drifts
+      meaningfully from 18.2%, if feature importance order shifts substantially
+      from the current ranking, if a new client segment is onboarded, or if three
+      months pass without a recheck against fresh data — this model has only been
+      tested on one static window.
+    </p>
+  </section>
+
+  <section id="repro">
+    <h2>Reproducibility</h2>
+    <p>
+      Every step in this paper — the data contract, the signal audit, the
+      baseline, the model, the validation audit, and the action playbook — is a
+      runnable notebook in the accompanying public repository, using the same
+      Hugging Face warehouse release cited above.
+    </p>
+    <ul>
+      <li><a href="https://github.com/samhere3116-maker/ML-Pipeline" target="_blank" rel="noopener">github.com/samhere3116-maker/ML-Pipeline</a> — full repository</li>
+      <li><code>work/notebooks/w03_data_contract.ipynb</code> — grain checks, availability, the five features, the leakage trap</li>
+      <li><code>work/notebooks/w04_baseline_score.ipynb</code> — the CTR-based baseline rule</li>
+      <li><code>work/notebooks/w05_model.ipynb</code> — the trained model vs. baseline</li>
+      <li><code>work/notebooks/w06_validation_audit.ipynb</code> — the honest-split audit and leakage re-check</li>
+      <li><code>work/notebooks/w07_action_playbook.ipynb</code> — the ranked queue and reason codes behind this page</li>
+    </ul>
+    <p>All random splits use <code>random_state=42</code> for exact reproducibility.</p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <h2 id="ack" style="font-size:1.1rem;">Acknowledgments &amp; Data Credit</h2>
+    <p>
+      Built on the FlyRank ML Internship dataset.
+      Learn more at <a href="https://flyrank.ai" target="_blank" rel="noopener">flyrank.ai</a>.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
